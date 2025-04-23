@@ -20,9 +20,9 @@ _start:
     mov ebx, dir_name
     int 0x80
 
+
     mov eax, 0x01
     xor ebx, ebx
     int 0x80
-
 
 
