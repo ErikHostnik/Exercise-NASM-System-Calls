@@ -31,10 +31,32 @@ _start:
     mov ecx, open_flags
     mov edx, file_mode
     int 0x80
+    mov esi, eax
+
+<<<<<<< HEAD
+
+=======
+    ;zapri datoteko
+    mov eax, 0x06
+    mov ebx, esi
+    int 0x80
+
+    ;Nastavljanje pravic
+    mov eax, 0x0f
+    mov ebx, file_name
+    mov ecx, file_mode
+    int 0x80
 
 
+    ;izhod
+>>>>>>> a96ef1f (NS-5 Nastavitev dovoljenj)
     mov eax, 0x01
     xor ebx, ebx
     int 0x80
 
+<<<<<<< HEAD
+=======
+    
+
+>>>>>>> a96ef1f (NS-5 Nastavitev dovoljenj)
 
