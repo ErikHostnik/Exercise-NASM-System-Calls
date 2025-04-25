@@ -32,9 +32,19 @@ _start:
     int 0x80
 
     ;izhod
+    ;Ustvarjanje datoteke
+    mov eax, 0x05
+    mov ebx, file_name
+    mov ecx, open_flags
+    mov edx, file_mode
+    int 0x80
+
+    ;izhod
     mov eax, 0x01
     xor ebx, ebx
     int 0x80
+
+
 
 
 
