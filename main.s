@@ -41,7 +41,7 @@ _start:
     mov ebx, esi
     int 0x80
 
-    ;Nastavljanje pravic
+    ;Nastavljanje pravicc
     mov eax, 0x0f
     mov ebx, file_name
     mov ecx, file_mode
