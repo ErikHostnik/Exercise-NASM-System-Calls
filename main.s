@@ -13,128 +13,113 @@ section .data
 
 section .text
 _start:
-    ; Ustvarjanje imenika 28859_Dir
-    mov eax, 0x27
+    ; --- ustvarjanje imenika in nastavitve fajla ---
+    mov eax, 0x27            ; sys_mkdir
     mov ebx, dir_name
     mov ecx, mode_dir
     int 0x80
 
-    ; Premik v imenik
-    mov eax, 0x0c
+    mov eax, 0x0c            ; sys_chdir
     mov ebx, dir_name
     int 0x80
 
-    ; Ustvarjanje datoteke
-    mov eax, 0x05
+    mov eax, 0x05            ; sys_open (CREATE|TRUNC|WRONLY)
     mov ebx, file_name
     mov ecx, open_flags
     mov edx, file_mode
     int 0x80
-    mov esi, eax        ; shranimo fd
-    ; Zapri datoteko
-    mov eax, 0x06
+    mov esi, eax             ; shrani fd v ESI
+    mov eax, 0x06            ; sys_close
     mov ebx, esi
     int 0x80
 
-    ; Nastavljanje pravic
-    mov eax, 0x0f
+    mov eax, 0x0f            ; sys_chmod
     mov ebx, file_name
     mov ecx, file_mode
     int 0x80
 
-
-
-    ; Odpri datoteko za pisanje (brez trunc, samo O_WRONLY)
-    mov eax, 0x05
+    ; --- odpri za pisanje brez trunc ---
+    mov eax, 0x05            ; sys_open
     mov ebx, file_name
     mov ecx, write_flags
-    mov edx, 0         
+    xor edx, edx
     int 0x80
-    mov ebx, eax       
+    mov edi, eax             ; shrani fd v EDI
 
-    ;sys_time
-    mov eax, 0x02
-    xor ebx, ebx       
-    int 0x80
-    
+    ; --- vzemi epoch time ---
+    mov eax, 0x0d            ; sys_time
+    xor ebx, ebx
+    int 0x80                 ; EAX = time_t
 
-    ; Izračun sekund
+    ; --- sekunde od začetka dneva ---
     mov ecx, 86400
     xor edx, edx
-    div ecx            
-    mov eax, edx       
+    div ecx                  ; EAX=celodnevni dnevi, EDX=sekunde-danes
+    mov ebp, edx             ; EBP = sekunde danes
 
-    ; Izračun ur
+    ; --- ure = sek-danes / 3600 ---
+    mov eax, ebp
     mov ecx, 3600
     xor edx, edx
-    div ecx            
-    mov esi, eax      
+    div ecx                  ; EAX=ure, EDX=preostale sek
+    mov esi, eax             ; ESI = ure
+    mov ebp, edx             ; EBP = preostale sek
 
-    ; Izračun minut
-    mov eax, edx       
+    ; --- minute = preostale sek / 60 ---
+    mov eax, ebp
     mov ecx, 60
     xor edx, edx
-    div ecx            
-    mov edi, eax      
-    mov edx, edx      
+    div ecx                  ; EAX=minute, EDX=sekunde
+    mov ebp, edx             ; EBP = sekunde
+    push eax                 ; na sklad shrani minute
 
-    ; Pretvorba v ASCII in shranjevanje v time_str
+    ; --- formatiranje v "HH-MM-SS" ---
     mov ebx, time_str
 
-    ; ure: desetice
+    ; ure
     mov eax, esi
     mov ecx, 10
     xor edx, edx
-    div ecx            
+    div ecx                  ; AL=tenice, DL=enice
     add al, '0'
     mov [ebx], al
-    
-    ; ure: enice
     add dl, '0'
     mov [ebx+1], dl
-    ; vezaj
     mov byte [ebx+2], '-'
 
-    ; minute: desetice
-    mov eax, edi
+    ; minute
+    pop ecx                  ; obnovi minutes
+    mov eax, ecx
     mov ecx, 10
     xor edx, edx
-    div ecx
+    div ecx                  ; AL=tenice, DL=enice
     add al, '0'
     mov [ebx+3], al
-    
-    ; minute: enice
     add dl, '0'
     mov [ebx+4], dl
-    ; vezaj
     mov byte [ebx+5], '-'
 
-    ; sekunde: desetice
-    mov eax, edx
+    ; sekunde
+    mov eax, ebp
     mov ecx, 10
     xor edx, edx
-    div ecx
+    div ecx                  ; AL=tenice, DL=enice
     add al, '0'
     mov [ebx+6], al
-
-    ; sekunde: enice
     add dl, '0'
     mov [ebx+7], dl
 
-    ; Zapiši 8 bajtov iz time_str
-    mov eax, 0x04      
-
-
-    ; ebx že vsebuje fd
+    ; --- zapiši v datoteko in izhod ---
+    mov eax, 0x04            ; sys_write
+    mov ebx, edi
     mov ecx, time_str
     mov edx, 8
     int 0x80
 
-    ; Zapri datoteko
-    mov eax, 0x06
+    mov eax, 0x06            ; sys_close
+    mov ebx, edi
     int 0x80
 
-    ; Izhod
-    mov eax, 0x01
+    mov eax, 0x01            ; sys_exit
     xor ebx, ebx
     int 0x80
